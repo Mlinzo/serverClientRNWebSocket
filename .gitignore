@@ -1,4 +1,5 @@
 client/node_modules
 client/.expo
 client/.expo-shared
+client/assets
 server/node_modules

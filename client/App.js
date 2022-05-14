@@ -1,37 +1,37 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Button } from 'react-native';
-
+import { StyleSheet, Text, View} from 'react-native';
 export default function App() {
 
-  const API = "http://192.168.0.108:5000/" 
-  const [getText, setGetText] = useState('Waiting for request...');
-  const [postText, setPostText] = useState('Waiting for request...');
+  const SOCKET_URL = "http://192.168.0.105:5001" 
+  const [alertLocations, setAlertLocations] = useState({});
+  let socket = useRef(null);
 
-  const getRequest = async () => {
-    await fetch(API, {method: 'GET'})
-      .then((res) => res.json() )
-      .then((resJson) => setGetText(resJson.message) )
-      .catch((err) => console.error(err));
-  }
-  const postRequest = async () => {
-    await fetch(API, {method: 'POST'})
-      .then((res) => res.json() )
-      .then((resJson) => setPostText(resJson.message) )
-      .catch((err) => console.error(err));
+
+  const connectSocket = () => {
+    socket = new WebSocket(SOCKET_URL);
+    socket.onopen = () => socket.send("Socket opened successfully");
+    socket.onmessage = ({data}) => setAlertLocations(data);  
+    socket.onclose = (e) => {
+      console.log('Socket is closed. Reconnecting...', e.reason);
+      setTimeout(connectSocket, 3000);
+    }
+    socket.onerror = (err) => {
+      console.error('Socket encountered error: ', err.message, 'Closing socket.');
+      socket.close();
+    }
   }
 
-  
+  useEffect(() => {
+    connectSocket();
+  }, []);
+
+
   return (
     <View style={styles.container}>
       <View style={{margin: 10}}>
-        <View style={{padding: 5}}>
-          <Button title="Get request" onPress={getRequest}/>
-          <Text>{getText}</Text>
-        </View>
-        <View style={{padding: 5}}>
-          <Button title="Post request" onPress={postRequest}/>
-          <Text>{postText}</Text>
+        <View>
+          <Text>alert locations on server:{'\n'+JSON.stringify(alertLocations)}</Text>
         </View>
         <StatusBar style="auto"/>
       </View>
