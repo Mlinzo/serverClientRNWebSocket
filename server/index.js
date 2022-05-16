@@ -6,8 +6,11 @@ const emitter = new events.EventEmitter();
 
 const alertLocations = [
 	{
-		lon: 13.1231231,
-		lat: 15.1231231
+		dangerLevel: 'low',
+		title: 'Odessa',
+		date: '16.05.2022',
+		dateFrom: '16.05.2022',
+		dateTo: '16.05.2022'
 	}
 ];
 
@@ -44,13 +47,14 @@ app.get('/api/alertLocations', (req, res) => {
 
 app.post('/api/enableAlert', (req, res)=>{
 	try {
-		const _lon = parseFloat(req.body.lon);
-		const _lat = parseFloat(req.body.lat);
 		alertLocations.push({
-			lon: _lon,
-			lat: _lat
+			dangerLevel: req.body.dangerLevel,
+			title: req.body.title,
+			date: req.body.date,
+			dateFrom: req.body.dateFrom,
+			dateTo: req.body.dateTo
 		});
-		res.sendStatus(200);
+		res.json({index: alertLocations.length-1});
 	} catch (e) { res.sendStatus(400) }
 	console.log('enabled alert for '+ JSON.stringify(alertLocations[alertLocations.length-1]));
 	emitter.emit('alertUpdate', alertLocations);
@@ -58,16 +62,11 @@ app.post('/api/enableAlert', (req, res)=>{
 
 app.post('/api/disableAlert', (req, res)=>{
 	try {
-		const _lon = parseFloat(req.body.lon);
-		const _lat = parseFloat(req.body.lat);
-		const ind = alertLocations.findIndex((location, index) => {
-			if (location.lon === _lon && location.lat === _lat) return true;
-		})
-		if (ind == -1) {res.sendStatus(400); return;}
+		const ind = parseInt(req.body.index);
+		console.log('disabled alert for '+ JSON.stringify(alertLocations[ind]));
 		alertLocations.splice(ind);
-		res.sendStatus(200);
-	} catch (e) { res.sendStatus(400) }
-	console.log('disabled alert for '+ JSON.stringify(req.body));
+		res.sendStatus(200);		
+	} catch (e) { res.sendStatus(400) };
 	emitter.emit('alertUpdate', alertLocations);
 });
 
@@ -76,5 +75,5 @@ app.get('*', (req, res) => {
 });
 
 app.listen(PORT, ()=> {
-	console.log("server started on port " + PORT);
+	console.log("express server started on port " + PORT);
 });
