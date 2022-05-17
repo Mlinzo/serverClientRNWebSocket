@@ -1,6 +1,9 @@
 const express = require("express");
 const PORT = process.env.PORT ?? 5000;
 const app = express();
+const server = require('http').createServer(app);
+const ws = require('ws');
+const wss = new ws.Server({server});
 const events = require('events');
 const emitter = new events.EventEmitter();
 
@@ -12,19 +15,15 @@ const alertLocations = [
 		dateFrom: '16.05.2022',
 		dateTo: '16.05.2022'
 	}
-];
+]
 
-const ws = require('ws');
-const wss = new ws.Server({
-    port: 5001
-}, () => {console.log('websocket server started on port ' + 5001)});
+wss.on('connection', (socket) => {
 
-
-wss.on('connection', (socket) => {	
 	socket.send(JSON.stringify(alertLocations));
 
 	socket.on('message', (msg) => {
-        console.log('received: ' + msg);
+		console.log('received from client: ' + msg)
+		if (msg == '__ping__') socket.send('__pong__');
     })
 
 	emitter.on('alertUpdate', () => {
@@ -74,6 +73,6 @@ app.get('*', (req, res) => {
 	res.sendStatus(404);
 });
 
-app.listen(PORT, ()=> {
-	console.log("express server started on port " + PORT);
+server.listen(PORT, ()=> {
+	console.log("server has started on port " + PORT);
 });
